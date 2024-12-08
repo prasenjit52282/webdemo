@@ -3,7 +3,7 @@ import joblib
 import extractor
 import os
 
-model_name = "RandomForestClassifier"
+model_name = "QuadraticDiscriminantAnalysis"
 model = joblib.load(model_name)
 
 UPLOAD_FOLDER = 'uploads'
