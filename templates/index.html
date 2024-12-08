@@ -7,7 +7,7 @@
     <style>
         /* General Styling */
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #f9f9f9;
             color: #333;
             text-align: center;
@@ -16,13 +16,13 @@
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-top: 20px;
+            font-size: 2em;
+            margin: 20px 0;
             color: #4CAF50;
         }
 
         p {
-            font-size: 1.2em;
+            font-size: 1em;
             color: #666;
         }
 
@@ -30,22 +30,18 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-top: 30px;
+            gap: 20px;
+            margin-top: 20px;
         }
 
-        /* Buttons */
         button, input[type="file"] {
-            padding: 12px 20px;
+            padding: 10px 15px;
             font-size: 1em;
-            font-weight: bold;
-            border: 2px solid #4CAF50;
-            border-radius: 8px;
+            border: 1px solid #4CAF50;
+            border-radius: 5px;
             background-color: #4CAF50;
             color: white;
             cursor: pointer;
-            transition: all 0.3s ease;
         }
 
         button:disabled {
@@ -55,47 +51,23 @@
         }
 
         button:hover:not(:disabled) {
-            background-color: white;
-            color: #4CAF50;
-        }
-
-        input[type="file"] {
-            border: 2px dashed #4CAF50;
-            background-color: #fff;
-            color: #4CAF50;
-            cursor: pointer;
-        }
-
-        input[type="file"]:hover {
-            background-color: #f1f1f1;
-        }
-
-        /* Result Display */
-        .result {
-            text-align: center;
+            background-color: #45a049;
         }
 
         .result-emoji {
-            font-size: 80px;
-            margin-bottom: 10px;
-        }
-
-        /* #emotionName {
-            font-size: 1.5em;
-            font-weight: bold;
-        } */
-
-        /* Image Container */
-        #emotionImage {
-            max-width: 300px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 60px;
             margin-top: 20px;
         }
 
-        /* Footer */
+        .result-text {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+        }
+
         footer {
-            margin-top: 50px;
+            margin-top: 30px;
             font-size: 0.9em;
             color: #aaa;
         }
@@ -103,25 +75,19 @@
 </head>
 <body>
     <h1>Emotion Prediction</h1>
-    <p>Select a recording and predict the emotion!</p>
+    <p>Select a recording and predict the emotion.</p>
 
     <div class="container">
         <input type="file" id="audioInput" accept="audio/*">
         <button id="predictButton" disabled>Predict</button>
     </div>
-    
-    <div class="result" id="resultContainer">
-        <span class="result-emoji" id="emojiResult">🎵</span>
-        <!-- <div id="emotionName"></div> -->
+
+    <div id="resultContainer">
+        <div class="result-emoji" id="emojiResult">🎵</div>
+        <div class="result-text" id="emotionText">Your predicted emotion will appear here.</div>
     </div>
 
-    <div>
-        <img id="emotionImage" src="https://via.placeholder.com/300" alt="Emotion Image">
-    </div>
-
-    <footer>
-        &copy; 2024 Emotion Predictor | Made with ❤️
-    </footer>
+    <footer>&copy; 2024 Emotion Predictor</footer>
 
     <script>
         const emojiMapping = {
@@ -134,28 +100,20 @@
             "surprise": "😲"
         };
 
-        const emotionNameMapping = {
-            "angry": "Angry",
-            "disgust": "Disgust",
-            "fear": "Fear",
-            "happy": "Happy",
-            "neutral": "Neutral",
-            "sad": "Sad",
-            "surprise": "Surprise"
-        };
-
         const audioInput = document.getElementById("audioInput");
         const predictButton = document.getElementById("predictButton");
         const emojiResult = document.getElementById("emojiResult");
-        // const emotionName = document.getElementById("emotionName");
-        const emotionImage = document.getElementById("emotionImage");
+        const emotionText = document.getElementById("emotionText");
 
-        // Enable the Predict button when a file is selected
-        audioInput.addEventListener("change", () => {
+        // Debounced enable function to avoid frequent DOM updates
+        const enablePredictButton = () => {
             predictButton.disabled = !audioInput.files.length;
+        };
+
+        audioInput.addEventListener("change", () => {
+            setTimeout(enablePredictButton, 100);
         });
 
-        // Handle Predict button click
         predictButton.addEventListener("click", async () => {
             const file = audioInput.files[0];
             if (!file) return;
@@ -169,26 +127,15 @@
                     body: formData,
                 });
 
-                if (!response.ok) {
-                    throw new Error("Error in prediction request");
-                }
+                if (!response.ok) throw new Error("Error in prediction request");
 
-                const data = await response.json();
-                const emotion = data.emotion; // Assume backend returns { emotion: "happy" }
-
-                // Update the result display
+                const { emotion } = await response.json();
                 emojiResult.textContent = emojiMapping[emotion] || "❓";
-                // emotionName.textContent = emotionNameMapping[emotion] || "Unknown";
-
-                // Dynamically update the image based on the emotion
-                emotionImage.src = `https://via.placeholder.com/300?text=${emotion.toUpperCase()}`;
-                emotionImage.alt = `${emotionNameMapping[emotion] || "Unknown"} Image`;
+                emotionText.textContent = emotion ? `Emotion Detected: ${emotion.toUpperCase()}` : "Unknown Emotion";
             } catch (error) {
                 console.error("Prediction failed:", error);
-                emojiResult.textContent = "❌"; // Error emoji
-                // emotionName.textContent = "Error";
-                emotionImage.src = "https://via.placeholder.com/300?text=Error";
-                emotionImage.alt = "Error Image";
+                emojiResult.textContent = "❌";
+                emotionText.textContent = "Error detecting emotion.";
             }
         });
     </script>
